@@ -1,0 +1,166 @@
+// ContestLab schema. Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ProblemMode {
+  FUNCTION
+  STDIN_STDOUT
+}
+
+enum Language {
+  JAVA
+  PYTHON
+  C
+  CPP
+}
+
+enum SubmissionStatus {
+  PENDING
+  RUNNING
+  ACCEPTED
+  WRONG_ANSWER
+  COMPILATION_ERROR
+  RUNTIME_ERROR
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  INTERNAL_ERROR
+}
+
+/// RUN executes sample tests only; SUBMIT executes every test and can mark a problem solved.
+enum SubmissionKind {
+  RUN
+  SUBMIT
+}
+
+model Contest {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  platform    String?
+  url         String?
+  description String?
+  startTime   DateTime?
+  endTime     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  problems Problem[]
+}
+
+model Problem {
+  id        String   @id @default(cuid())
+  /// Deleting a contest deletes its problems (and, transitively, their tests, submissions and state).
+  contestId String?
+  contest   Contest? @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  /// Position label inside the contest, e.g. "A", "B1".
+  label     String?
+  order     Int      @default(0)
+
+  title        String
+  slug         String      @unique
+  difficulty   Difficulty  @default(MEDIUM)
+  mode         ProblemMode @default(STDIN_STDOUT)
+  topics       String[]    @default([])
+  statement    String
+  inputFormat  String?
+  outputFormat String?
+  constraints  String?
+  /// Displayed examples: [{ input, output, explanation? }]
+  examples     Json        @default("[]")
+
+  /// FUNCTION mode only: { name, params: [{ name, type }], returnType }.
+  functionSpec     Json?
+  /// Starter code keyed by Language, e.g. { "PYTHON": "...", "JAVA": "..." }.
+  starterTemplates Json  @default("{}")
+
+  timeLimitMs   Int @default(2000)
+  memoryLimitKb Int @default(262144)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  testCases   TestCase[]
+  submissions Submission[]
+  states      UserProblemState[]
+
+  @@index([contestId, order])
+  @@index([difficulty])
+}
+
+model TestCase {
+  id             String   @id @default(cuid())
+  problemId      String
+  problem        Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  input          String
+  expectedOutput String
+  /// Sample cases are visible to the client; hidden cases never leave the server.
+  isSample       Boolean  @default(false)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([problemId, isSample, order])
+}
+
+model Submission {
+  id        String           @id @default(cuid())
+  problemId String
+  problem   Problem          @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  kind      SubmissionKind   @default(SUBMIT)
+  language  Language
+  code      String
+  status    SubmissionStatus @default(PENDING)
+
+  passedCount   Int?
+  totalCount    Int?
+  /// Max wall/CPU time and memory across test cases, as reported by the judge.
+  timeMs        Int?
+  memoryKb      Int?
+  compileOutput String?
+  errorMessage  String?
+  /// Per-test results as returned to the client (hidden cases carry no input/output).
+  results       Json?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([problemId, createdAt])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model UserProblemState {
+  id        String  @id @default(cuid())
+  /// Single-user for now; kept so auth can be added without reshaping data.
+  userId    String  @default("local")
+  problemId String
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  solved          Boolean           @default(false)
+  solvedAt        DateTime?
+  attempts        Int               @default(0)
+  lastStatus      SubmissionStatus?
+  lastSubmittedAt DateTime?
+  /// Saved editor code keyed by Language.
+  savedCode       Json              @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, problemId])
+  @@index([problemId])
+}
