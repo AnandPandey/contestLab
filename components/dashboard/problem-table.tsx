@@ -63,7 +63,7 @@ export function ProblemTable({
                 <SolveState state={p.state} />
               </td>
               <td className="py-3 pr-4">
-                <Link href={`/problems/${p.slug}/edit`} className="font-medium text-ink hover:text-accent-strong">
+                <Link href={`/problems/${p.slug}`} className="font-medium text-ink hover:text-accent-strong">
                   {p.label && <span className="mr-1.5 text-ink-muted">{p.label}.</span>}
                   {p.title}
                 </Link>

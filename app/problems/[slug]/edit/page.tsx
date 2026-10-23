@@ -10,7 +10,9 @@ import type { Example } from "@/components/problems/examples-editor";
 import { ProblemForm } from "@/components/problems/problem-form";
 import type { Templates } from "@/components/problems/starter-editor";
 import { TestCaseManager, type ClientTestCase } from "@/components/problems/test-case-manager";
+import { Code } from "lucide-react";
 import { DeleteButton } from "@/components/ui/delete-button";
+import { ButtonLink } from "@/components/ui/form";
 import { Panel } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,12 +35,18 @@ async function EditProblem({ params }: { params: PageProps<"/problems/[slug]/edi
         description="Edit the problem and manage its test cases."
         back={back}
         actions={
+          <>
+          <ButtonLink href={`/problems/${problem.slug}`}>
+            <Code className="size-4" aria-hidden />
+            Solve
+          </ButtonLink>
           <DeleteButton
             endpoint={`/api/problems/${problem.id}`}
             redirectTo={back.href}
             label="Delete problem"
             confirmText={`Delete "${problem.title}"? Its test cases, submissions and progress are deleted too.`}
           />
+          </>
         }
       />
       <ProblemForm

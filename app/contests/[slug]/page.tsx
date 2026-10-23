@@ -105,10 +105,10 @@ async function ContestDetail({ params }: { params: Params }) {
             {contest.problems.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-ink">
+                  <Link href={`/problems/${p.slug}`} className="font-medium text-ink hover:text-accent-strong">
                     {p.label && <span className="mr-1.5 text-ink-muted">{p.label}.</span>}
                     {p.title}
-                  </p>
+                  </Link>
                   {p.topics.length > 0 && <p className="mt-0.5 text-xs text-ink-muted">{p.topics.join(", ")}</p>}
                 </div>
                 <DifficultyBadge difficulty={p.difficulty} />

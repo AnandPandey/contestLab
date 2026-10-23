@@ -102,6 +102,20 @@ export async function listProblems({ contestId, difficulty, topic, status, q }: 
   return problems.map(serializeProblemSummary);
 }
 
+/** Public problem view (sample tests only) plus the user's saved code, for the workspace. */
+export async function getWorkspaceData(key: string) {
+  const problem = await prisma.problem.findFirst({ where: byIdOrSlug(key), include: problemDetailInclude });
+  if (!problem) return null;
+  const state = await prisma.userProblemState.findUnique({
+    where: { userId_problemId: { userId: LOCAL_USER, problemId: problem.id } },
+    select: { savedCode: true },
+  });
+  return {
+    problem: serializeProblemDetail(problem),
+    savedCode: (state?.savedCode ?? {}) as Partial<Record<string, string>>,
+  };
+}
+
 /** Everything the problem editor needs. Hidden test cases come back as metadata only. */
 export async function getProblemForEdit(key: string) {
   const problem = await prisma.problem.findFirst({
