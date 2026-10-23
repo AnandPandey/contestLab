@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "@/lib/api";
 import type { Prisma } from "@/app/generated/prisma/client";
+import type { Difficulty } from "@/app/generated/prisma/enums";
 
 /** Single-user mode until auth exists. */
 export const LOCAL_USER = "local";
@@ -63,6 +64,42 @@ type ProblemSummaryRow = Prisma.ProblemGetPayload<{ select: typeof problemSummar
 
 export function serializeProblemSummary({ states, ...rest }: ProblemSummaryRow) {
   return { ...rest, state: states[0] ?? null };
+}
+
+export type ProblemSummary = ReturnType<typeof serializeProblemSummary>;
+
+export type ProblemFilters = {
+  contestId?: string;
+  difficulty?: Difficulty;
+  topic?: string;
+  status?: "solved" | "attempted" | "unattempted";
+  q?: string;
+};
+
+/** Problem summaries matching the filters, newest first. Shared by the API and pages. */
+export async function listProblems({ contestId, difficulty, topic, status, q }: ProblemFilters) {
+  const local = { userId: LOCAL_USER };
+  const statusFilter: Prisma.ProblemWhereInput | undefined =
+    status === "solved"
+      ? { states: { some: { ...local, solved: true } } }
+      : status === "attempted"
+        ? { states: { some: { ...local, solved: false, attempts: { gt: 0 } } } }
+        : status === "unattempted"
+          ? { states: { none: { ...local, attempts: { gt: 0 } } } }
+          : undefined;
+
+  const problems = await prisma.problem.findMany({
+    where: {
+      contestId,
+      difficulty,
+      topics: topic ? { has: topic } : undefined,
+      title: q ? { contains: q, mode: "insensitive" } : undefined,
+      ...statusFilter,
+    },
+    orderBy: [{ createdAt: "desc" }],
+    select: problemSummarySelect,
+  });
+  return problems.map(serializeProblemSummary);
 }
 
 /** Hidden cases expose only metadata; their input/output stays on the server. */

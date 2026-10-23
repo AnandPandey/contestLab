@@ -24,6 +24,10 @@ export const FUNCTION_TYPES = [
   "string[]",
 ] as const;
 
+export const LANGUAGE_LABELS = Object.fromEntries(
+  LANGUAGES.map((l) => [l.id, l.label]),
+) as Record<Language, string>;
+
 export type FunctionType = (typeof FUNCTION_TYPES)[number];
 
 /** Max size of one submitted / saved source file. */

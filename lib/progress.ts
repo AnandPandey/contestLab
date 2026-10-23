@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { LOCAL_USER } from "@/lib/problems";
 import { Difficulty } from "@/app/generated/prisma/enums";
@@ -11,9 +12,10 @@ const pct = (solved: number, total: number) =>
 /**
  * Aggregates progress from UserProblemState. "Solved" is a per-problem flag, so a
  * problem counts once regardless of how many accepted submissions it has.
- * Personal-scale data, so aggregating in memory keeps this simple.
+ * Personal-scale data, so aggregating in memory keeps this simple. Wrapped in
+ * React `cache` so several dashboard sections share one query per request.
  */
-export async function getProgress() {
+export const getProgress = cache(async function getProgress() {
   const [problems, contests, recentSubmissions, submissionCount] = await Promise.all([
     prisma.problem.findMany({
       select: {
@@ -88,5 +90,9 @@ export async function getProgress() {
       .map(([topic, b]) => ({ topic, ...withPct(b) }))
       .sort((a, b) => b.total - a.total || a.topic.localeCompare(b.topic)),
     recentSubmissions,
+    /** When this snapshot was taken; the reference point for relative times. */
+    generatedAt: new Date(),
   };
-}
+});
+
+export type Progress = Awaited<ReturnType<typeof getProgress>>;
