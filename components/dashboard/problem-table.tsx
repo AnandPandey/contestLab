@@ -1,4 +1,6 @@
-import { Circle, CircleCheck, CircleDot, ListChecks } from "lucide-react";
+import Link from "next/link";
+import { Circle, CircleCheck, CircleDot, ListChecks, Plus } from "lucide-react";
+import { ButtonLink } from "@/components/ui/form";
 import type { ProblemSummary } from "@/lib/problems";
 import { DifficultyBadge } from "@/components/ui/difficulty-badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -26,7 +28,16 @@ export function ProblemTable({
       <EmptyState icon={ListChecks} title="No problems match these filters" />
     ) : (
       <EmptyState icon={ListChecks} title="No problems yet">
-        Add a contest and its problems to start practicing.
+        <p>Add a contest and its problems to start practicing.</p>
+        <div className="mt-3 flex justify-center gap-2">
+          <ButtonLink href="/contests/new" className="py-1.5 text-xs">
+            <Plus className="size-3.5" aria-hidden />
+            New contest
+          </ButtonLink>
+          <ButtonLink href="/problems/new" variant="secondary" className="py-1.5 text-xs">
+            New problem
+          </ButtonLink>
+        </div>
       </EmptyState>
     );
   }
@@ -52,11 +63,18 @@ export function ProblemTable({
                 <SolveState state={p.state} />
               </td>
               <td className="py-3 pr-4">
-                <p className="font-medium text-ink">
+                <Link href={`/problems/${p.slug}/edit`} className="font-medium text-ink hover:text-accent-strong">
                   {p.label && <span className="mr-1.5 text-ink-muted">{p.label}.</span>}
                   {p.title}
-                </p>
-                {p.contest && <p className="mt-0.5 text-xs text-ink-muted">{p.contest.title}</p>}
+                </Link>
+                {p.contest && (
+                  <Link
+                    href={`/contests/${p.contest.slug}`}
+                    className="mt-0.5 block text-xs text-ink-muted hover:text-ink-2"
+                  >
+                    {p.contest.title}
+                  </Link>
+                )}
               </td>
               <td className="hidden py-3 pr-4 md:table-cell">
                 <div className="flex flex-wrap gap-1">

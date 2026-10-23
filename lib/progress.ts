@@ -26,7 +26,7 @@ export const getProgress = cache(async function getProgress() {
       },
     }),
     prisma.contest.findMany({
-      select: { id: true, title: true, slug: true, startTime: true },
+      select: { id: true, title: true, slug: true, platform: true, startTime: true, endTime: true },
       orderBy: [{ startTime: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
     }),
     prisma.submission.findMany({

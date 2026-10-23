@@ -102,6 +102,20 @@ export async function listProblems({ contestId, difficulty, topic, status, q }: 
   return problems.map(serializeProblemSummary);
 }
 
+/** Everything the problem editor needs. Hidden test cases come back as metadata only. */
+export async function getProblemForEdit(key: string) {
+  const problem = await prisma.problem.findFirst({
+    where: byIdOrSlug(key),
+    include: {
+      contest: { select: { id: true, title: true, slug: true } },
+      testCases: { orderBy: [{ isSample: "desc" }, { order: "asc" }, { createdAt: "asc" }] },
+    },
+  });
+  if (!problem) return null;
+  const { testCases, ...rest } = problem;
+  return { ...rest, testCases: testCases.map(serializeTestCase) };
+}
+
 /** Hidden cases expose only metadata; their input/output stays on the server. */
 export function serializeTestCase(tc: {
   id: string;

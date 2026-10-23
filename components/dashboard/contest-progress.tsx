@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Trophy } from "lucide-react";
 import type { Progress } from "@/lib/progress";
 import { formatDate } from "@/lib/format";
@@ -16,9 +17,13 @@ export function ContestProgress({ contests }: { contests: Progress["byContest"] 
         <ul className="grid gap-px bg-line sm:grid-cols-2 xl:grid-cols-3">
           {contests.map((c) => (
             <li key={c.id} className="bg-surface p-4">
-              <p className="truncate text-sm font-medium text-ink" title={c.title}>
+              <Link
+                href={`/contests/${c.slug}`}
+                className="block truncate text-sm font-medium text-ink hover:text-accent-strong"
+                title={c.title}
+              >
                 {c.title}
-              </p>
+              </Link>
               <p className="mt-0.5 text-xs text-ink-muted">
                 {c.startTime ? formatDate(c.startTime) : "No date"}
               </p>
